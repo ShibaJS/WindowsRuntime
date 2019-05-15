@@ -19,10 +19,13 @@ namespace Shiba.Scripting.Visitors
             if (value.ValueType != JavaScriptValueType.Object || !value.HasProperty(className.ToJavaScriptPropertyId()))
                 return value.ToNative();
             var type = value.GetProperty(className.ToJavaScriptPropertyId()).ToNative<string>();
-            return type switch {
-                ViewType => VisitView(value),
-                _ => throw new ArgumentOutOfRangeException()
-                };
+            switch (type)
+            {
+                case ViewType:
+                    return VisitView(value);
+                default: throw new ArgumentOutOfRangeException();
+
+            }
         }
 
         private View VisitView(JavaScriptValue value)
