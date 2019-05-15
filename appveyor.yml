@@ -16,4 +16,3 @@ deploy:
   name: nuget
   on:
     branch: master
-
