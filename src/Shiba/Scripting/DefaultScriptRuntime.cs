@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Windows.Foundation.Diagnostics;
 using ChakraHosting;
 using Shiba.Controls;
 using Shiba.Internal;
@@ -141,13 +142,40 @@ namespace Shiba.Scripting
             ChakraHost.LeaveContext();
         }
 
+        private void CreateRunShibaAppFunction()
+        {
+            var id = "runShibaApp".ToJavaScriptPropertyId();
+            var function = JavaScriptValue.CreateFunction(RunShibaApp, IntPtr.Zero);
+            ChakraHost.GlobalObject.SetProperty(id, function, true);
+        }
+
         private void CreateRegisterComponentFunction()
         {
-            var id = JavaScriptPropertyId.FromString("registerComponent");
+            var id = "registerComponent".ToJavaScriptPropertyId();
             var function = JavaScriptValue.CreateFunction(RegisterComponent, IntPtr.Zero);
             ChakraHost.GlobalObject.SetProperty(id, function, true);
         }
 
+        private static JavaScriptValue RunShibaApp(JavaScriptValue callee, bool call,
+            JavaScriptValue[] arguments,
+            ushort count, IntPtr data)
+        {
+            var args = arguments.Skip(1).ToArray();
+            if (count < 1)
+            {
+                return false.ToJavaScriptValue();
+            }
+
+            var view = args[0];
+            var component = Singleton<JSViewVisitor>.Instance.Visit(view);
+            if (component is View shibaView)
+            {
+                ShibaApp.Instance.AppComponent = shibaView;
+                return true.ToJavaScriptValue();
+            }
+
+            return false.ToJavaScriptValue();
+        }
 
         private static JavaScriptValue RegisterComponent(JavaScriptValue callee, bool call,
             JavaScriptValue[] arguments,
@@ -208,6 +236,7 @@ namespace Shiba.Scripting
         {
             //AddObject("http", new Http());
             CreateRegisterComponentFunction();
+            CreateRunShibaAppFunction();
         }
     }
 

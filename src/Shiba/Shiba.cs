@@ -26,6 +26,7 @@ namespace Shiba
         internal Dictionary<string, View> Components { get; } = new Dictionary<string, View>();
         public ShibaConfiguration Configuration { get; } = new ShibaConfiguration();
         public static ShibaApp Instance { get; protected set; }
+        internal View AppComponent { get; set; }
 
         public void AddConverter(string converter)
         {

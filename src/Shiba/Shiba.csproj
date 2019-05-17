@@ -158,6 +158,9 @@
     <Compile Include="Shiba.cs" />
     <Compile Include="ShibaHost.cs" />
     <Compile Include="Internal\Singleton.cs" />
+    <Compile Include="ShibaPage.xaml.cs">
+      <DependentUpon>ShibaPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ViewMappers\GridMapper.cs" />
     <Compile Include="ViewMappers\InputMapper.cs" />
     <Compile Include="ViewMappers\ListMapper.cs" />
@@ -177,6 +180,12 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.2</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="ShibaPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
