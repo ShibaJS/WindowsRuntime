@@ -21,5 +21,7 @@
     <file src="Shiba\bin\Release\Shiba.dll" target="lib\uap10.0\Shiba.dll" />
     <file src="Shiba\bin\Release\Shiba.pdb" target="lib\uap10.0\Shiba.pdb" />
     <file src="Shiba\bin\Release\Shiba.pri" target="lib\uap10.0\Shiba.pri" />
+    <file src="Shiba\bin\Release\Shiba.xr.xml" target="lib\uap10.0\Shiba\Shiba.xr.xml" />
+    <file src="Shiba\bin\Release\ShibaPage.xbf" target="lib\uap10.0\Shiba\Themes\ShibaPage.xbf" />
   </files>
 </package>

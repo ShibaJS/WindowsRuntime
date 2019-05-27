@@ -104,7 +104,7 @@ namespace Shiba.ViewMappers
 
         public TNativeView Map(ShibaView view, IShibaContext context)
         {
-            var target = CreateNativeView();
+            var target = CreateNativeView(context);
             if (_propertyCache == null) _propertyCache = PropertyMaps().ToList();
 
             if (view.DefaultValue != null && DefaultPropertyMap != null && HasDefaultProperty)
@@ -122,7 +122,7 @@ namespace Shiba.ViewMappers
             return target;
         }
 
-        public virtual TNativeView CreateNativeView()
+        public virtual TNativeView CreateNativeView(IShibaContext context)
         {
             return new TNativeView();
         }
