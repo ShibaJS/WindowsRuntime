@@ -7,10 +7,12 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Windows.UI.Xaml;
+using ChakraHosting;
 using Newtonsoft.Json.Linq;
 using Shiba.Controls;
 using Shiba.ExtensionExecutors;
 using Shiba.Internal;
+using Shiba.Scripting;
 using ShibaView = Shiba.Controls.View;
 using NativeView = Windows.UI.Xaml.FrameworkElement;
 using NativeBinding = Windows.UI.Xaml.Data.Binding;
@@ -278,6 +280,56 @@ namespace Shiba.Visitors
                 default:
                     return null;
             }
+        }
+
+        private object Visit(JavaScriptValue value, IShibaContext context)
+        {
+            switch (value.ValueType)
+            {
+                case JavaScriptValueType.Object:
+                    return VisitJavascriptObject(value);
+                case JavaScriptValueType.Array:
+                    return VisitJavascriptArray(value);
+                case JavaScriptValueType.Boolean:
+                    return value.ToBoolean();
+                case JavaScriptValueType.Error:
+                case JavaScriptValueType.Null:
+                    return null;
+                case JavaScriptValueType.Number:
+                    return value.ToDouble();
+                case JavaScriptValueType.String:
+                    return value.ToString();
+                case JavaScriptValueType.Undefined:
+                case JavaScriptValueType.Function:
+                default:
+                    return value;
+            }
+        }
+
+        private List<object> VisitJavascriptArray(JavaScriptValue value)
+        {
+            var result = new List<object>();
+            {
+                var currentIndex = 0;
+                while (value.HasIndexedProperty(currentIndex.ToJavaScriptValue()))
+                {
+                    result.Add(Visit(value.GetIndexedProperty(currentIndex.ToJavaScriptValue()), null));
+                    currentIndex++;
+                }
+            }
+            return result;
+        }
+
+        private ShibaObject VisitJavascriptObject(JavaScriptValue value)
+        {
+            var propers = VisitJavascriptArray(value.GetOwnPropertyNames()).Cast<string>().ToList();
+            var obj = new ShibaObject();
+            foreach (var name in propers)
+            {
+                obj.TryAdd(name, Visit(value.GetProperty(name.ToJavaScriptPropertyId()), null));
+            }
+
+            return obj;
         }
     }
 
