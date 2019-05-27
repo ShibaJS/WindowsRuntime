@@ -23,7 +23,7 @@
 
     public interface IViewMapper<T> : IViewMapper
     {
-        T CreateNativeView();
+        T CreateNativeView(IShibaContext context);
         new T Map(View view, IShibaContext context);
     }
 }
