@@ -5,6 +5,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Media;
+using ChakraHosting;
 using Shiba.Controls;
 using Shiba.Internal;
 using Shiba.Visitors;
@@ -80,7 +81,10 @@ namespace Shiba.ViewMappers
                     view.SetBinding(DependencyProperty, binding);
                     break;
                 default:
-                    value.TryChangeType(ValueType, out value);
+                    if (!ValueType.IsEnum)
+                    {
+                        value.TryChangeType(ValueType, out value);
+                    }
                     value = Converter == null ? value : Converter.Invoke(value);
                     if (value.GetType() == PropertyType) view.SetValue(DependencyProperty, value);
                     break;
@@ -88,21 +92,22 @@ namespace Shiba.ViewMappers
         }
     }
 
-    public class ViewMapper<TNativeView> : IViewMapper<TNativeView>
+    public class ViewMapper<TNativeView> : IViewMapper
         where TNativeView : NativeView, new()
     {
-        private List<IValueMap> _propertyCache;
+        protected internal List<IValueMap> _propertyCache;
 
         protected virtual bool HasDefaultProperty { get; } = false;
 
         protected virtual PropertyMap DefaultPropertyMap { get; }
+
 
         object IViewMapper.Map(ShibaView view, IShibaContext context)
         {
             return Map(view, context);
         }
 
-        public TNativeView Map(ShibaView view, IShibaContext context)
+        protected virtual TNativeView Map(ShibaView view, IShibaContext context)
         {
             var target = CreateNativeView(context);
             if (_propertyCache == null) _propertyCache = PropertyMaps().ToList();
@@ -122,18 +127,44 @@ namespace Shiba.ViewMappers
             return target;
         }
 
-        public virtual TNativeView CreateNativeView(IShibaContext context)
+        protected virtual TNativeView CreateNativeView(IShibaContext context)
         {
             return new TNativeView();
         }
 
-        public virtual IEnumerable<IValueMap> PropertyMaps()
+        protected virtual IEnumerable<IValueMap> PropertyMaps()
         {
             yield return new PropertyMap("enable",
                 Control.IsEnabledProperty,
                 typeof(bool));
-            yield return new PropertyMap("width", NativeView.WidthProperty, typeof(double));
-            yield return new PropertyMap("height", NativeView.HeightProperty, typeof(double));
+            yield return new ManuallyValueMap("width", typeof(object), (element, o) =>
+            {
+                if (o.TryChangeType<double>(out var numberResult))
+                {
+                    element.Width = numberResult;
+                } 
+                else if (o is string str)
+                {
+                    if (str == "fill")
+                    {
+                        element.HorizontalAlignment = HorizontalAlignment.Stretch;
+                    }
+                }
+            });
+            yield return new ManuallyValueMap("height", typeof(object), (element, o) =>
+            {
+                if (o.TryChangeType<double>(out var numberResult))
+                {
+                    element.Width = numberResult;
+                } 
+                else if (o is string str)
+                {
+                    if (str == "fill")
+                    {
+                        element.VerticalAlignment = VerticalAlignment.Stretch;
+                    }
+                }
+            });
             yield return new PropertyMap("maxHeight", NativeView.MaxHeightProperty, typeof(double));
             yield return new PropertyMap("minHeight", NativeView.MinHeightProperty, typeof(double));
             yield return new PropertyMap("maxWidth", NativeView.MaxWidthProperty, typeof(double));
@@ -141,34 +172,57 @@ namespace Shiba.ViewMappers
             yield return new PropertyMap("name", NativeView.NameProperty, typeof(string));
             yield return new PropertyMap("visible", UIElement.VisibilityProperty, typeof(bool),
                 value => (bool) value ? Visibility.Visible : Visibility.Collapsed);
-            yield return new PropertyMap("background", Control.BackgroundProperty, typeof(string),
-                ColorConverter);
-            yield return new PropertyMap("padding", Control.PaddingProperty, typeof(ShibaObject), typeof(NativeThickness),
-                value =>
+            yield return new ManuallyValueMap("background", typeof(string), (element, o) =>
+            {
+                var brush = ColorConverter(o) as Brush;
+                switch (element)
                 {
+                    case Panel panel:
+                        panel.Background = brush;
+                        break;
+                    case Control control:
+                        control.Background = brush;
+                        break;
+                }
+            });
+            yield return new ManuallyValueMap("padding", typeof(object),
+                (element, value) =>
+                {
+                    NativeThickness thickness;
                     switch (value)
                     {
-                        case decimal numberValue:
-                            var dvalue = Convert.ToDouble(numberValue);
-                            return new NativeThickness(dvalue, dvalue, dvalue, dvalue);
                         case ShibaObject shibaMap:
-                            return shibaMap.ToNativeThickness();
+                            thickness = shibaMap.ToNativeThickness();
+                            break;
+                        default:
+                            thickness = value.TryChangeType<int>(out var ivalue) ? new NativeThickness(ivalue, ivalue, ivalue, ivalue) : new NativeThickness();
+                            break;
                     }
 
-                    return new NativeThickness();
+                    
+                    switch (element)
+                    {
+                        case Control control:
+                            control.Padding = thickness;
+                            break;
+                    }
                 });
-            yield return new PropertyMap("margin", NativeView.MarginProperty, typeof(ShibaObject), typeof(NativeThickness),
-                value =>
+            yield return new ManuallyValueMap("margin", typeof(object),
+                (element, value) =>
                 {
+                    NativeThickness thickness;
                     switch (value)
                     {
-                        case decimal numberValue:
-                            var dvalue = Convert.ToDouble(numberValue);
-                            return new NativeThickness(dvalue, dvalue, dvalue, dvalue);
                         case ShibaObject shibaMap:
-                            return shibaMap.ToNativeThickness();
+                            thickness = shibaMap.ToNativeThickness();
+                            break;
+                        default:
+                            thickness = value.TryChangeType<int>(out var ivalue) ? new NativeThickness(ivalue, ivalue, ivalue, ivalue) : new NativeThickness();
+
+                            break;
                     }
-                    return new NativeThickness();
+
+                    element.Margin = thickness;
                 });
             yield return new PropertyMap("alpha", UIElement.OpacityProperty, typeof(double));
             yield return new PropertyMap("style", NativeView.StyleProperty, typeof(string), typeof(Style));
@@ -181,6 +235,10 @@ namespace Shiba.ViewMappers
 
         protected object ColorConverter(object arg)
         {
+            if (arg is Brush)
+            {
+                return arg;
+            }
             if (!(arg is string value)) throw new ArgumentException("background value should be string");
 
             return new SolidColorBrush(value.ToNativeColor());
@@ -191,12 +249,24 @@ namespace Shiba.ViewMappers
             return null;
         }
 
-        private void SetValue(IShibaContext context, object value, IValueMap valueMap, TNativeView target)
+        protected internal void SetValue(IShibaContext context, object value, IValueMap valueMap, TNativeView target)
         {
             var targetValue = valueMap.ValueType == value?.GetType()
                 ? value
                 : Singleton<ValueVisitor>.Instance.DynamicVisit(value, context);
             valueMap.SetValue(target, targetValue);
+        }
+    }
+
+    public class AllowChildViewMapper<TNativeView> : ViewMapper<TNativeView>, IAllowChildViewMapper 
+        where TNativeView: Panel, new()
+    {
+        public virtual void AddChild(NativeView parent, NativeView child)
+        {
+            if (parent is Panel panel)
+            {
+                panel.Children.Add(child);
+            }
         }
     }
 }

@@ -30,23 +30,23 @@ namespace Shiba.Scripting.Conversion
                         {
                             dynamic dtask = task;
                             var taskResult = await dtask as object;
-                            runtime.ChakraHost.EnterContext();
+                            //runtime.ChakraHost.EnterContext();
                             resolve.CallFunction(result, taskResult.ToJavaScriptValue());
-                            runtime.ChakraHost.LeaveContext();
+                            //runtime.ChakraHost.LeaveContext();
                         }
                         else //Task
                         {
                             await task;
-                            runtime.ChakraHost.EnterContext();
+                            //runtime.ChakraHost.EnterContext();
                             resolve.CallFunction(result, JavaScriptValue.Invalid);
-                            runtime.ChakraHost.LeaveContext();
+                            //runtime.ChakraHost.LeaveContext();
                         }
                     }
                     catch (Exception ex)
                     {
-                        runtime.ChakraHost.EnterContext();
+                        //runtime.ChakraHost.EnterContext();
                         reject.CallFunction(result, JavaScriptValue.FromString(ex.Message));
-                        runtime.ChakraHost.LeaveContext();
+                        //runtime.ChakraHost.LeaveContext();
                     }
                 });
 

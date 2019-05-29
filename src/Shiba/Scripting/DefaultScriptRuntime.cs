@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Foundation.Diagnostics;
+using Windows.UI.Core;
 using ChakraHosting;
 using Shiba.Controls;
 using Shiba.Internal;
@@ -15,7 +19,7 @@ namespace Shiba.Scripting
     public class DefaultScriptRuntime : IScriptRuntime, IDisposable
     {
         private readonly List<JavaScriptNativeFunction> _functions = new List<JavaScriptNativeFunction>();
-        private readonly JavaScriptValue[] _prefix;
+        private JavaScriptValue[] _prefix;
 
         public DefaultScriptRuntime()
         {
@@ -24,7 +28,8 @@ namespace Shiba.Scripting
             _prefix = new[] {JavaScriptValue.FromBoolean(false)};
             InitConversion();
             InitRuntimeObject();
-            ChakraHost.LeaveContext();
+            // Since the hole application will run with shiba, maybe we should not leave context until application is exit?
+            //ChakraHost.LeaveContext();
         }
 
         public ChakraHost ChakraHost { get; private set; }
@@ -35,9 +40,9 @@ namespace Shiba.Scripting
             ChakraHost = null;
         }
 
-        public object Execute(string functionName, params object[] parameters)
+        public object CallFunction(string functionName, params object[] parameters)
         {
-            ChakraHost.EnterContext();
+            //ChakraHost.EnterContext();
             var func = ChakraHost.GlobalObject.GetProperty(
                 JavaScriptPropertyId.FromString(functionName));
             object result = null;
@@ -51,15 +56,15 @@ namespace Shiba.Scripting
                     break;
             }
 
-            ChakraHost.LeaveContext();
+            //ChakraHost.LeaveContext();
             return result;
         }
 
         public object Execute(string script)
         {
-            ChakraHost.EnterContext();
+            //ChakraHost.EnterContext();
             var result = ChakraHost.RunScript(script).ToNative();
-            ChakraHost.LeaveContext();
+            //ChakraHost.LeaveContext();
             return result;
         }
 
@@ -67,7 +72,7 @@ namespace Shiba.Scripting
         {
             if (value == null || string.IsNullOrEmpty(name)) throw new ArgumentException();
 
-            ChakraHost.EnterContext();
+            //ChakraHost.EnterContext();
             var objPropertyId = JavaScriptPropertyId.FromString(name);
             switch (value)
             {
@@ -139,7 +144,7 @@ namespace Shiba.Scripting
                     break;
             }
 
-            ChakraHost.LeaveContext();
+            //ChakraHost.LeaveContext();
         }
 
         private void CreateRunShibaAppFunction()

@@ -13,6 +13,7 @@ using Shiba.Controls;
 using Shiba.ExtensionExecutors;
 using Shiba.Internal;
 using Shiba.Scripting;
+using Shiba.ViewMappers;
 using ShibaView = Shiba.Controls.View;
 using NativeView = Windows.UI.Xaml.FrameworkElement;
 using NativeBinding = Windows.UI.Xaml.Data.Binding;
@@ -41,6 +42,7 @@ namespace Shiba.Visitors
         //TODO: Dictionary means it does not support multiple renderer for one view (like Xamarin.Forms custom renderer)
         private static readonly ConcurrentDictionary<string, IViewMapper> Renderer =
             new ConcurrentDictionary<string, IViewMapper>();
+        private static readonly IViewMapper ShibaHostMapper = new ComponentMapper();
 
         private NativeView Visit(View view, IShibaContext context)
         {
@@ -51,17 +53,8 @@ namespace Shiba.Visitors
             {
                 if (ShibaApp.Instance.Components.ContainsKey(view.ViewName))
                 {
-                    // TODO: Properties
-                    var host = new ShibaHost
-                    {
-                        Component = view.ViewName,
-                    };
-                    host.SetBinding(FrameworkElement.DataContextProperty, new NativeBinding
-                    {
-                        Source = context.ShibaHost,
-                        Path = new PropertyPath("DataContext")
-                    });
-                    return host;
+                    view.Properties.Add(new Property("componentName", view.ViewName));
+                    return ShibaHostMapper.Map(view, context) as ShibaHost;
                 }
 
                 return null;
@@ -77,7 +70,14 @@ namespace Shiba.Visitors
                 view.Children.ForEach(it =>
                 {
                     var child = Visit(it, context);
-                    panel.Children.Add(child);
+                    if (renderer is IAllowChildViewMapper viewGroupMapper)
+                    {
+                        viewGroupMapper.AddChild(panel, child);
+                    }
+                    else
+                    {
+                        panel.Children.Add(child);
+                    }
                     var commonprop = it.Properties.Where(prop =>
                             ShibaApp.Instance.Configuration.CommonProperties.Any(cp => cp.Name == prop.Name))
                         .ToList();

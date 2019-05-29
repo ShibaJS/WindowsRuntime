@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
 using Shiba.CommonProperty;
 using Shiba.Controls;
 using Shiba.ExtensionExecutors;
@@ -28,9 +31,9 @@ namespace Shiba
         public static ShibaApp Instance { get; protected set; }
         internal View AppComponent { get; set; }
 
-        public void AddConverter(string converter)
+        public void AddConverter(string name, Func<List<object>, object> converter)
         {
-            Configuration.ScriptRuntime.Execute(converter);
+            Configuration.NativeConverters.Add(name, converter);
         }
 
         public static void Init(Action<ShibaConfiguration> action = null)
@@ -48,6 +51,9 @@ namespace Shiba
     {
         public IScriptRuntime ScriptRuntime { get; set; } = new DefaultScriptRuntime();
         public string PlatformType { get; set; } = "Windows";
+
+        public Dictionary<string, Func<List<object>, object>> NativeConverters { get; set; } =
+            new Dictionary<string, Func<List<object>, object>>();
 
         public List<IExtensionExecutor> ExtensionExecutors { get; } =
             AppDomain.CurrentDomain.GetAssemblies()

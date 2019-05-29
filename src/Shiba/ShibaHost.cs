@@ -1,5 +1,7 @@
 ﻿using Windows.UI.Xaml;
 using Shiba.Controls;
+using Shiba.Internal;
+using Shiba.Visitors;
 using NativeParent = Windows.UI.Xaml.Controls.ContentControl;
 
 
@@ -11,6 +13,8 @@ namespace Shiba
         public static readonly DependencyProperty ComponentProperty = DependencyProperty.Register(
             nameof(Component), typeof(string), typeof(ShibaHost),
             new PropertyMetadata(default, PropertyChangedCallback));
+
+        private string _creator;
 
         public ShibaHost()
         {
@@ -24,6 +28,21 @@ namespace Shiba
         {
             get => (string) GetValue(ComponentProperty);
             set => SetValue(ComponentProperty, value);
+        }
+
+        public string Creator
+        {
+            get => _creator;
+            set
+            {
+                _creator = value;
+                OnCreatorChanged(value);
+            }
+        }
+
+        private void OnCreatorChanged(string value)
+        {
+            Content = NativeRenderer.RenderFromFunction(value, Context);
         }
 
         public IShibaContext Context { get; }

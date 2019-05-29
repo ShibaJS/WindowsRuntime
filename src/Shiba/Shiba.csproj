@@ -11,7 +11,7 @@
     <AssemblyName>Shiba</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.17763.0</TargetPlatformVersion>
+    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.18362.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.16299.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
@@ -143,6 +143,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="CommonProperty\ICommonProperty.cs" />
     <Compile Include="ExtensionExecutors\IShibaExtension.cs" />
+    <Compile Include="Internal\Extensions.cs" />
     <Compile Include="NativeRenderer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scripting\Conversion\JTokenConversion.cs" />
@@ -161,6 +162,7 @@
     <Compile Include="ShibaPage.xaml.cs">
       <DependentUpon>ShibaPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewMappers\ComponentMapper.cs" />
     <Compile Include="ViewMappers\GridMapper.cs" />
     <Compile Include="ViewMappers\InputMapper.cs" />
     <Compile Include="ViewMappers\ListMapper.cs" />
@@ -172,7 +174,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ChakraHosting">
-      <Version>1.0.1</Version>
+      <Version>1.0.5</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.8</Version>
