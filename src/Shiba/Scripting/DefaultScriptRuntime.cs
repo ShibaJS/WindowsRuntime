@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,6 +14,7 @@ using Shiba.Internal;
 using Shiba.Scripting.Conversion;
 using Shiba.Scripting.Runtime;
 using Shiba.Scripting.Visitors;
+using Console = System.Console;
 
 namespace Shiba.Scripting
 {
@@ -36,14 +38,24 @@ namespace Shiba.Scripting
 
         public void Dispose()
         {
+            ChakraHost?.LeaveContext();
             ChakraHost?.Dispose();
             ChakraHost = null;
         }
 
         public object CallFunction(string functionName, params object[] parameters)
         {
+            return CallFunction(ChakraHost.GlobalObject, functionName, parameters);
+        }
+
+        public object CallFunction(object instance, string functionName, params object[] parameters)
+        {
             //ChakraHost.EnterContext();
-            var func = ChakraHost.GlobalObject.GetProperty(
+            if (!(instance is JavaScriptValue javaScriptValue))
+            {
+                return null;
+            }
+            var func = javaScriptValue.GetProperty(
                 JavaScriptPropertyId.FromString(functionName));
             object result = null;
             switch (func.ValueType)
@@ -58,6 +70,87 @@ namespace Shiba.Scripting
 
             //ChakraHost.LeaveContext();
             return result;
+        }
+
+        public object GetProperty(object instance, string propertyName)
+        {
+            if (!(instance is JavaScriptValue javaScriptValue))
+            {
+                return null;
+            }
+
+            if (!javaScriptValue.HasProperty(propertyName.ToJavaScriptPropertyId()))
+            {
+                return null;
+            }
+
+            return javaScriptValue.GetProperty(propertyName.ToJavaScriptPropertyId()).ToNative();
+        }
+
+        public object GetAtIndex(object instance, int index)
+        {
+            if (!(instance is JavaScriptValue javaScriptValue))
+            {
+                return null;
+            }
+
+            if (javaScriptValue.ValueType != JavaScriptValueType.Array)
+            {
+                return null;
+            }
+
+            return javaScriptValue.GetIndexedProperty(JavaScriptValue.FromInt32(index)).ToNative();
+        }
+
+        public void AddRef(object instance)
+        {
+            if (!(instance is JavaScriptValue javaScriptValue))
+            {
+                return;
+            }
+
+            javaScriptValue.AddRef();
+        }
+
+        public void ReleaseObj(object instance)
+        {
+            if (!(instance is JavaScriptValue javaScriptValue))
+            {
+                return;
+            }
+
+            javaScriptValue.Release();
+        }
+
+        public bool IsArray(object instance)
+        {
+            if (!(instance is JavaScriptValue javaScriptValue))
+            {
+                return false;
+            }
+
+            return javaScriptValue.ValueType == JavaScriptValueType.Array;
+        }
+
+        public IEnumerable ToArray(object instance)
+        {
+            if (IsArray(instance))
+            {
+                var javascriptValue = (JavaScriptValue)instance;
+                var result = new List<object>();
+                var currentIndex = 0;
+                while (javascriptValue.HasIndexedProperty(currentIndex.ToJavaScriptValue()))
+                {
+                    result.Add(javascriptValue.GetIndexedProperty(currentIndex.ToJavaScriptValue()).ToNative());
+                    currentIndex++;
+                }
+
+                return result;
+            }
+            else
+            {
+                return Enumerable.Empty<object>();
+            }
         }
 
         public object Execute(string script)
@@ -239,7 +332,7 @@ namespace Shiba.Scripting
 
         private void InitRuntimeObject()
         {
-            //AddObject("http", new Http());
+            AddObject("http", new Http());
             CreateRegisterComponentFunction();
             CreateRunShibaAppFunction();
         }

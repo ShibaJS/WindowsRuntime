@@ -286,13 +286,13 @@ namespace Shiba.Visitors
         {
             switch (value.ValueType)
             {
+                case JavaScriptValueType.Error:
                 case JavaScriptValueType.Object:
                     return VisitJavascriptObject(value);
                 case JavaScriptValueType.Array:
                     return VisitJavascriptArray(value);
                 case JavaScriptValueType.Boolean:
                     return value.ToBoolean();
-                case JavaScriptValueType.Error:
                 case JavaScriptValueType.Null:
                     return null;
                 case JavaScriptValueType.Number:

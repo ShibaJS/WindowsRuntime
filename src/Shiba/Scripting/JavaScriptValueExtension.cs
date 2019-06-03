@@ -20,6 +20,8 @@ namespace Shiba.Scripting
         {
             switch (it)
             {
+                case JavaScriptValue javaScriptValue:
+                    return javaScriptValue;
                 case bool value:
                     return JavaScriptValue.FromBoolean(value);
                 case string value:

@@ -11,6 +11,7 @@ using Shiba.Controls;
 using Shiba.ExtensionExecutors;
 using Shiba.Scripting;
 using Shiba.Scripting.Runtime;
+using Console = Shiba.Scripting.Runtime.Console;
 
 namespace Shiba
 {
@@ -41,7 +42,8 @@ namespace Shiba
             Instance = new ShibaApp(c =>
             {
                 c.PlatformType = "UWP";
-                c.ScriptRuntime.AddObject("storage", new Storage());
+                c.ScriptRuntime.AddObject("shibaStorage", new Storage());
+                c.ScriptRuntime.AddObject("console", new Console());
                 action?.Invoke(c);
             });
         }

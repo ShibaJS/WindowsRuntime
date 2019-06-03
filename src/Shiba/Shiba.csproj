@@ -153,6 +153,7 @@
     <Compile Include="Scripting\DefaultScriptRuntime.cs" />
     <Compile Include="Scripting\IScriptRuntime.cs" />
     <Compile Include="Scripting\JavaScriptValueExtension.cs" />
+    <Compile Include="Scripting\Runtime\Console.cs" />
     <Compile Include="Scripting\Runtime\Http.cs" />
     <Compile Include="Scripting\Runtime\Storage.cs" />
     <Compile Include="Scripting\Visitors\JSViewVisitor.cs" />
@@ -174,7 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ChakraHosting">
-      <Version>1.0.5</Version>
+      <Version>1.0.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.8</Version>
