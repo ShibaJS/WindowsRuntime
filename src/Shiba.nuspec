@@ -7,7 +7,7 @@
     <authors>Tlaster</authors>
     <owners>Tlaster</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <license>https://github.com/Tlaster/Shiba/blob/master/LICENSE.md</license>
+    <license type="expression">MIT</license>
     <projectUrl>https://github.com/Tlaster/Shiba</projectUrl>
     <description>Shiba</description>
     <dependencies>
