@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -44,8 +45,12 @@ namespace Shiba
                 c.PlatformType = "UWP";
                 c.ScriptRuntime.AddObject("shibaStorage", new Storage());
                 c.ScriptRuntime.AddObject("console", new Console());
+                c.CommonProperties.Add(new GridProperty());
+                c.CommonProperties.Add(new RelativeProperty());
+                c.ExtensionExecutors.Add(new BindingExecutor());
+                c.ExtensionExecutors.Add(new JsonExecutor());
                 action?.Invoke(c);
-            });
+            }); 
         }
     }
 
@@ -57,18 +62,8 @@ namespace Shiba
         public Dictionary<string, Func<List<object>, object>> NativeConverters { get; set; } =
             new Dictionary<string, Func<List<object>, object>>();
 
-        public List<IExtensionExecutor> ExtensionExecutors { get; } =
-            AppDomain.CurrentDomain.GetAssemblies()
-                .Where(it => !it.IsDynamic)
-                .SelectMany(it => it.ExportedTypes)
-                .Where(it => it.IsClass && !it.IsAbstract && typeof(IExtensionExecutor).IsAssignableFrom(it))
-                .Select(it => Activator.CreateInstance(it) as IExtensionExecutor).ToList();
+        public List<IExtensionExecutor> ExtensionExecutors { get; } = new List<IExtensionExecutor>();
 
-        public List<ICommonProperty> CommonProperties { get; } =
-            AppDomain.CurrentDomain.GetAssemblies()
-                .Where(it => !it.IsDynamic)
-                .SelectMany(it => it.ExportedTypes)
-                .Where(it => it.IsClass && !it.IsAbstract && typeof(ICommonProperty).IsAssignableFrom(it))
-                .Select(it => Activator.CreateInstance(it) as ICommonProperty).ToList();
+        public List<ICommonProperty> CommonProperties { get; } = new List<ICommonProperty>();
     }
 }
