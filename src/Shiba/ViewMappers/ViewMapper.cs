@@ -4,6 +4,7 @@ using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using ChakraHosting;
 using Shiba.Controls;
@@ -17,6 +18,24 @@ using NativeThickness = Windows.UI.Xaml.Thickness;
 
 namespace Shiba.ViewMappers
 {
+    public interface IEventMap
+    {
+        string Name { get; }
+        Action<NativeView, string, IShibaContext> Setter { get; }
+    }
+
+    public class EventMap : IEventMap
+    {
+        public EventMap(string name, Action<NativeView, string, IShibaContext> setter)
+        {
+            Name = name;
+            Setter = setter;
+        }
+
+        public string Name { get; }
+        public Action<NativeView, string, IShibaContext> Setter { get; }
+    }
+
     public interface IValueMap
     {
         string Name { get; }
@@ -95,12 +114,18 @@ namespace Shiba.ViewMappers
     public class ViewMapper<TNativeView> : IViewMapper
         where TNativeView : NativeView, new()
     {
-        protected internal List<IValueMap> _propertyCache;
+        protected internal readonly Lazy<List<IValueMap>> _propertyCache;
+        protected internal readonly Lazy<List<IEventMap>> _eventCache;
+
+        protected ViewMapper()
+        {
+            _propertyCache = new Lazy<List<IValueMap>>(() => PropertyMaps().ToList());
+            _eventCache = new Lazy<List<IEventMap>>(() => EventMaps().ToList());
+        }
 
         protected virtual bool HasDefaultProperty { get; } = false;
 
         protected virtual PropertyMap DefaultPropertyMap { get; }
-
 
         object IViewMapper.Map(ShibaView view, IShibaContext context)
         {
@@ -110,17 +135,24 @@ namespace Shiba.ViewMappers
         protected virtual TNativeView Map(ShibaView view, IShibaContext context)
         {
             var target = CreateNativeView(context);
-            if (_propertyCache == null) _propertyCache = PropertyMaps().ToList();
 
             if (view.DefaultValue != null && DefaultPropertyMap != null && HasDefaultProperty)
                 SetValue(context, view.DefaultValue, DefaultPropertyMap, target);
 
             foreach (var property in view.Properties)
             {
-                var cache = _propertyCache.LastOrDefault(it => it.Name == property.Name);
-                if (cache != null)
+                var propertyCache = _propertyCache.Value.LastOrDefault(it => it.Name == property.Name);
+                if (propertyCache != null)
                 {
-                    SetValue(context, property.Value, cache, target);
+                    SetValue(context, property.Value, propertyCache, target);
+                }
+                else
+                {
+                    var eventCache = _eventCache.Value.LastOrDefault(it => it.Name == property.Name);
+                    if (eventCache != null && property.Value is string name)
+                    {
+                        eventCache.Setter.Invoke(target, name, context);
+                    }
                 }
             }
 
@@ -130,6 +162,14 @@ namespace Shiba.ViewMappers
         protected virtual TNativeView CreateNativeView(IShibaContext context)
         {
             return new TNativeView();
+        }
+
+        protected virtual IEnumerable<IEventMap> EventMaps()
+        {
+            yield return new EventMap("click", (element, name, context) =>
+            {
+                element.Tapped += delegate { context.EventCallback(name); };
+            });
         }
 
         protected virtual IEnumerable<IValueMap> PropertyMaps()

@@ -9,6 +9,7 @@ using Windows.ApplicationModel.Core;
 using Windows.Foundation.Diagnostics;
 using Windows.UI.Core;
 using ChakraHosting;
+using Newtonsoft.Json;
 using Shiba.Controls;
 using Shiba.Internal;
 using Shiba.Scripting.Conversion;
@@ -21,13 +22,11 @@ namespace Shiba.Scripting
     public class DefaultScriptRuntime : IScriptRuntime, IDisposable
     {
         private readonly List<JavaScriptNativeFunction> _functions = new List<JavaScriptNativeFunction>();
-        private JavaScriptValue[] _prefix;
 
         public DefaultScriptRuntime()
         {
             ChakraHost = new ChakraHost();
             ChakraHost.EnterContext();
-            _prefix = new[] {JavaScriptValue.FromBoolean(false)};
             InitConversion();
             InitRuntimeObject();
             // Since the hole application will run with shiba, maybe we should not leave context until application is exit?
@@ -41,6 +40,46 @@ namespace Shiba.Scripting
             ChakraHost?.LeaveContext();
             ChakraHost?.Dispose();
             ChakraHost = null;
+        }
+
+        public bool HasFunction(string name)
+        {
+            return HasFunction(ChakraHost.GlobalObject, name);
+        }
+
+        public bool HasFunction(object instance, string name)
+        {
+            if (!(instance is JavaScriptValue javaScriptValue))
+            {
+                return false;
+            }
+
+            return javaScriptValue.GetProperty(name.ToJavaScriptPropertyId()).ValueType == JavaScriptValueType.Function;
+        }
+
+        public object CallFunctionWithCustomThis(object thiz, string functionName, params object[] parameters)
+        {
+            //ChakraHost.EnterContext();
+            if (!(thiz is JavaScriptValue javaScriptValue))
+            {
+                return null;
+            }
+            var func = ChakraHost.GlobalObject.GetProperty(
+                JavaScriptPropertyId.FromString(functionName));
+            object result = null;
+            switch (func.ValueType)
+            {
+                case JavaScriptValueType.Function:
+                {
+                    var param = new []{javaScriptValue}.Concat(parameters.Select(it => it.ToJavaScriptValue())).ToArray();
+                    
+                    result = func.CallFunction(param).ToNative();
+                }
+                    break;
+            }
+
+            //ChakraHost.LeaveContext();
+            return result;
         }
 
         public object CallFunction(string functionName, params object[] parameters)
@@ -62,7 +101,7 @@ namespace Shiba.Scripting
             {
                 case JavaScriptValueType.Function:
                 {
-                    var param = _prefix.Concat(parameters.Select(it => it.ToJavaScriptValue())).ToArray();
+                    var param = new []{javaScriptValue}.Concat(parameters.Select(it => it.ToJavaScriptValue())).ToArray();
                     result = func.CallFunction(param).ToNative();
                 }
                     break;

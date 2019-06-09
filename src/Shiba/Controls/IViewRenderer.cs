@@ -10,18 +10,8 @@ namespace Shiba.Controls
 {
     public interface IShibaContext
     {
-        IShibaHost ShibaHost { get; }
-    }
-
-    public interface IShibaHost
-    {
         object DataContext { get; }
-        IShibaContext Context { get; }
-    }
-
-    public class ShibaContext : IShibaContext
-    {
-        public IShibaHost ShibaHost { get; set; }
+        void EventCallback(string name);
     }
 
     internal interface IViewMapper
@@ -33,5 +23,4 @@ namespace Shiba.Controls
     {
         void AddChild(NativeView parent, NativeView child);
     }
-
 }

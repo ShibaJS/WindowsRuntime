@@ -12,11 +12,10 @@ namespace Shiba.ViewMappers
         protected override ShibaHost Map(View view, IShibaContext context)
         {
             var target = CreateNativeView(context);
-            if (_propertyCache == null) _propertyCache = PropertyMaps().ToList();
 
             foreach (var property in view.Properties)
             {
-                var cache = _propertyCache.LastOrDefault(it => it.Name == property.Name);
+                var cache = _propertyCache.Value.LastOrDefault(it => it.Name == property.Name);
                 if (cache != null)
                 {
                     SetValue(context, property.Value, cache, target);

@@ -21,15 +21,11 @@ namespace Shiba
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public partial class ShibaPage : Page, IShibaHost
+    public partial class ShibaPage : Page
     {
         public ShibaPage()
         {
             this.InitializeComponent();
-            Context = new ShibaContext
-            {
-                ShibaHost = this
-            };
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
